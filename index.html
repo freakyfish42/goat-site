@@ -210,6 +210,10 @@
   .profile dt { color: var(--muted); }
   .profile dd { margin: 0; }
   .profile dd small { color: var(--muted); }
+  .profile .thumbs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 14px; }
+  .profile .thumb { width: 56px; height: 56px; padding: 0; border: 2px solid var(--line); border-radius: 8px; overflow: hidden; background: none; cursor: pointer; }
+  .profile .thumb.on, .profile .thumb:hover { border-color: var(--accent); }
+  .profile .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
   .link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
 
   @media (max-width: 600px) {
@@ -463,9 +467,24 @@ function goatSVG(g) {
   </svg>`;
 }
 
-/* Photo from photos/<id>.webp if it exists, otherwise the stick drawing */
+/* Photo files for a goat, main photo first. Goats saved before multiple photos
+   existed have no photos list, so they use photos/<id>.webp. */
+function photosOf(g) {
+  return Array.isArray(g.photos) ? g.photos : [`${g.id}.webp`];
+}
+/* Main photo, or the stick drawing if the goat has no photo */
 function goatPic(g) {
-  return `<img class="goat photo" src="photos/${g.id}.webp" alt="${g.name}" onerror="fallbackGoat(this,'${g.id}')">`;
+  const files = photosOf(g);
+  if (!files.length) return goatSVG(g);
+  return `<img class="goat photo" src="photos/${files[0]}" alt="${g.name}" onerror="fallbackGoat(this,'${g.id}')">`;
+}
+/* Thumbnails under the main photo in the profile, only when there is more than one */
+function photoThumbs(g) {
+  const files = photosOf(g);
+  if (files.length < 2) return "";
+  return `<div class="thumbs">${files.map((f, i) =>
+    `<button class="thumb${i ? "" : " on"}" data-photo="${f}" aria-label="${g.name} ${i + 1}">` +
+    `<img src="photos/${f}" alt="" onerror="this.parentNode.remove()"></button>`).join("")}</div>`;
 }
 function fallbackGoat(img, id) {
   img.outerHTML = goatSVG(byId[id]);
@@ -546,6 +565,7 @@ function openProfile(id) {
   $("profile").innerHTML = `
     <button class="close" data-close aria-label="${t("close")}">✕</button>
     <div class="pic ${living ? "" : "dimmed"}">${goatPic(g)}</div>
+    ${photoThumbs(g)}
     <h3>${g.name}</h3>
     <p class="meta">${sexText(g)}${g.ear ? " · " + t("earTag") + " " + g.ear : ""}
       ${living ? `<span class="tag herd">${t("inHerd")}</span>` : tagFor(g)}</p>
@@ -562,6 +582,13 @@ function openProfile(id) {
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-goat]");
   if (el) openProfile(el.dataset.goat);
+});
+document.addEventListener("click", e => {
+  const thumb = e.target.closest("[data-photo]");
+  if (!thumb) return;
+  const main = document.querySelector("#profile .pic img");
+  if (main) main.src = "photos/" + thumb.dataset.photo;
+  document.querySelectorAll("#profile .thumb").forEach(b => b.classList.toggle("on", b === thumb));
 });
 $("dlg").addEventListener("click", e => {
   if (e.target === $("dlg") || e.target.closest("[data-close]")) $("dlg").close();

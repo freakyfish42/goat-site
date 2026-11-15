@@ -39,8 +39,12 @@
   .full { grid-column: 1 / -1; }
   .check { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
   .check input { width: auto; }
-  .photo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .photo img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+  .photos { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .photos figure { margin: 0; width: 120px; }
+  .photos img { display: block; width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+  .photos .main { font-size: 12px; color: var(--accent); margin: 2px 0 0; min-height: 18px; }
+  .pbtns { display: flex; justify-content: space-between; gap: 4px; margin-top: 2px; }
+  .pbtns button { font: inherit; font-size: 13px; padding: 2px 8px; background: none; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
   .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
   button.primary { background: var(--accent); color: #fff; border: 0; padding: 9px 18px; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; }
   button.secondary { background: none; color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; border-radius: 6px; cursor: pointer; font: inherit; }
@@ -109,14 +113,10 @@
           <textarea id="bio"></textarea>
         </div>
         <div class="full">
-          <label>Photo</label>
-          <div class="photo">
-            <img id="preview" alt="">
-            <div>
-              <input type="file" id="file" accept="image/*">
-              <p class="hint" id="photoNote">Photos are resized and saved as WebP.</p>
-            </div>
-          </div>
+          <label>Photos (the first one is the main photo)</label>
+          <div id="photos" class="photos"></div>
+          <input type="file" id="file" accept="image/*" multiple>
+          <p class="hint" id="photoNote">Photos are resized and saved as WebP.</p>
         </div>
       </div>
 
@@ -135,7 +135,8 @@ const CHECKS = ["approx","origin"];
 let goats = [];
 let current = null;          // id of the goat being edited, or null for a new goat
 let isNew = false;
-let pendingPhoto = null;     // { id, base64 } once a new photo is chosen
+let photoList = [];          // photos of the goat being edited, main photo first:
+                             // { file, src, base64 }. file is null for a photo not yet saved.
 
 const $ = (id) => document.getElementById(id);
 const setStatus = (msg, cls = "") => { const s = $("statusMsg"); s.textContent = msg; s.className = cls; };
@@ -187,11 +188,62 @@ function fillForm(g) {
   $("approx").checked = !!g.approx;
   
   $("origin").checked = !!g.origin;
-  $("preview").src = isNew ? "" : `../photos/${g.id}.webp?v=${Date.now()}`;
-  $("preview").onerror = () => { $("preview").removeAttribute("src"); };
+  // Goats saved before multiple photos existed have no photos list: their photo is photos/<id>.webp
+  const files = isNew ? [] : (Array.isArray(g.photos) ? g.photos : [`${g.id}.webp`]);
+  photoList = files.map((f) => ({ file: f, src: `../photos/${f}?v=${Date.now()}`, base64: null }));
+  renderPhotos();
   $("file").value = "";
-  pendingPhoto = null;
   $("photoNote").textContent = "Photos are resized and saved as WebP.";
+  $("photoNote").className = "hint";
+}
+
+function renderPhotos() {
+  const box = $("photos");
+  box.innerHTML = "";
+  photoList.forEach((p, i) => {
+    const fig = document.createElement("figure");
+    const img = document.createElement("img");
+    img.alt = "";
+    img.src = p.src;
+    // A file that is missing from the repo is dropped from the list
+    img.onerror = () => { photoList = photoList.filter((x) => x !== p); renderPhotos(); };
+    const main = document.createElement("p");
+    main.className = "main";
+    main.textContent = i === 0 ? "Main photo" : "";
+    const bar = document.createElement("div");
+    bar.className = "pbtns";
+    bar.append(
+      photoButton("◀", "Move earlier", () => movePhoto(p, -1)),
+      photoButton("✕", "Remove", () => removePhoto(p)),
+      photoButton("▶", "Move later", () => movePhoto(p, 1)),
+    );
+    fig.append(img, main, bar);
+    box.appendChild(fig);
+  });
+}
+
+function photoButton(label, title, onClick) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = label;
+  b.title = title;
+  b.onclick = onClick;
+  return b;
+}
+
+function movePhoto(p, dir) {
+  const i = photoList.indexOf(p);
+  const j = i + dir;
+  if (j < 0 || j >= photoList.length) return;
+  [photoList[i], photoList[j]] = [photoList[j], photoList[i]];
+  renderPhotos();
+}
+
+function removePhoto(p) {
+  photoList = photoList.filter((x) => x !== p);
+  renderPhotos();
+  $("photoNote").textContent = "Photo removed from this goat (saved when you press Save).";
+  $("photoNote").className = "hint";
 }
 
 function select(id) {
@@ -241,17 +293,23 @@ function imageToWebp(file) {
 }
 
 $("file").addEventListener("change", async () => {
-  const file = $("file").files[0];
-  if (!file) return;
+  const files = [...$("file").files];
+  $("file").value = "";
+  if (!files.length) return;
+  $("photoNote").className = "hint";
+  if (!$("id").value.trim()) {
+    $("photoNote").textContent = "Give the goat an ID before adding a photo.";
+    $("photoNote").className = "err";
+    return;
+  }
   try {
-    const id = $("id").value.trim();
-    if (!id) throw new Error("Give the goat an ID before adding a photo.");
-    const out = await imageToWebp(file);
-    pendingPhoto = { id, base64: out.base64 };
-    $("preview").src = out.dataUrl;
-    $("photoNote").textContent = `New photo ready: photos/${id}.webp (saved when you press Save).`;
+    for (const file of files) {
+      const out = await imageToWebp(file);
+      photoList.push({ file: null, src: out.dataUrl, base64: out.base64 });
+    }
+    renderPhotos();
+    $("photoNote").textContent = `${files.length} new photo(s) added (saved when you press Save).`;
   } catch (e) {
-    pendingPhoto = null;
     $("photoNote").textContent = e.message;
     $("photoNote").className = "err";
   }
@@ -290,8 +348,20 @@ $("form").addEventListener("submit", async (e) => {
   }
   // A goat's children are not affected by renaming because we do not allow ID changes after creation.
 
+  // New photos get their file names here, once the goat's ID is final: <id>.webp, <id>-2.webp, ...
+  const taken = new Set(photoList.filter((p) => p.file).map((p) => p.file));
+  const uploads = [];
+  g.photos = photoList.map((p) => {
+    if (p.file) return p.file;
+    let n = 1, name;
+    do { name = n === 1 ? `${g.id}.webp` : `${g.id}-${n}.webp`; n++; } while (taken.has(name));
+    taken.add(name);
+    uploads.push({ file: name, base64: p.base64 });
+    return name;
+  });
+
   const payload = { goats: next.map(stripEmpty) };
-  if (pendingPhoto && pendingPhoto.id === g.id) payload.photo = pendingPhoto;
+  if (uploads.length) payload.photos = uploads;
 
   $("saveBtn").disabled = true;
   setStatus("Saving...");
@@ -306,7 +376,6 @@ $("form").addEventListener("submit", async (e) => {
     goats = next;
     current = g.id;
     isNew = false;
-    pendingPhoto = null;
     renderList();
     fillForm(goats.find((x) => x.id === g.id));
     setStatus("Saved. The site will update in a minute or two.", "ok");

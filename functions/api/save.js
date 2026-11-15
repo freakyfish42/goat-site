@@ -1,5 +1,5 @@
 // Cloudflare Pages Function: POST /api/save
-// Receives the full goat list (and optionally one new photo) from /admin
+// Receives the full goat list (and optionally new photos) from /admin
 // and commits it to the GitHub repo in a single commit. Pages then redeploys.
 //
 // Required Pages environment variables (set in the Cloudflare dashboard):
@@ -12,6 +12,8 @@
 
 const MAX_PHOTO_CHARS = 6 * 1024 * 1024; // base64 characters
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,40}$/;
+const PHOTO_FILE_PATTERN = /^[a-z0-9][a-z0-9-]{0,40}\.webp$/;
+const MAX_PHOTOS_PER_SAVE = 8;
 const SEXES = ["doe", "buck"];
 const STATUSES = ["herd", "passed"];
 
@@ -32,6 +34,11 @@ function validate(goats) {
     if (typeof g.name !== "string" || !g.name.trim()) return `Missing name for ${g.id}`;
     if (!SEXES.includes(g.sex)) return `Invalid sex for ${g.id}`;
     if (!STATUSES.includes(g.status)) return `Invalid status for ${g.id}`;
+    if (g.photos !== undefined) {
+      if (!Array.isArray(g.photos) || g.photos.some((f) => typeof f !== "string" || !PHOTO_FILE_PATTERN.test(f))) {
+        return `Invalid photos for ${g.id}`;
+      }
+    }
   }
   // Parent references must point to goats that exist (or be null)
   for (const g of goats) {
@@ -83,15 +90,18 @@ export async function onRequestPost({ request, env }) {
   const problem = validate(body.goats);
   if (problem) return json(400, { error: problem });
 
-  let photo = null;
-  if (body.photo) {
-    const { id, base64 } = body.photo;
-    if (!ID_PATTERN.test(id || "")) return json(400, { error: "Invalid photo id." });
-    if (typeof base64 !== "string" || base64.length > MAX_PHOTO_CHARS) {
+  const uploads = body.photos === undefined ? [] : body.photos;
+  if (!Array.isArray(uploads) || uploads.length > MAX_PHOTOS_PER_SAVE) {
+    return json(400, { error: `Too many photos in one save (max ${MAX_PHOTOS_PER_SAVE}).` });
+  }
+  for (const up of uploads) {
+    if (!up || !PHOTO_FILE_PATTERN.test(up.file || "")) return json(400, { error: "Invalid photo file name." });
+    if (typeof up.base64 !== "string" || up.base64.length > MAX_PHOTO_CHARS) {
       return json(400, { error: "Photo is missing or too large." });
     }
-    if (!body.goats.some((g) => g.id === id)) return json(400, { error: "Photo belongs to an unknown goat." });
-    photo = { id, base64 };
+    if (!body.goats.some((g) => Array.isArray(g.photos) && g.photos.includes(up.file))) {
+      return json(400, { error: "Photo is not used by any goat." });
+    }
   }
 
   const branch = env.GITHUB_BRANCH || "main";
@@ -103,7 +113,7 @@ export async function onRequestPost({ request, env }) {
     const parentSha = ref.object.sha;
     const parentCommit = await gh(env, `/git/commits/${parentSha}`);
 
-    // 2. Blobs: the goats file, plus the photo if one was uploaded
+    // 2. Blobs: the goats file, plus any photos uploaded
     const blobs = [];
     const goatsBlob = await gh(env, "/git/blobs", {
       method: "POST",
@@ -114,12 +124,12 @@ export async function onRequestPost({ request, env }) {
     });
     blobs.push({ path: "data/goats.json", mode: "100644", type: "blob", sha: goatsBlob.sha });
 
-    if (photo) {
+    for (const up of uploads) {
       const photoBlob = await gh(env, "/git/blobs", {
         method: "POST",
-        body: JSON.stringify({ content: photo.base64, encoding: "base64" }),
+        body: JSON.stringify({ content: up.base64, encoding: "base64" }),
       });
-      blobs.push({ path: `photos/${photo.id}.webp`, mode: "100644", type: "blob", sha: photoBlob.sha });
+      blobs.push({ path: `photos/${up.file}`, mode: "100644", type: "blob", sha: photoBlob.sha });
     }
 
     // 3. New tree on top of the current one
@@ -129,7 +139,7 @@ export async function onRequestPost({ request, env }) {
     });
 
     // 4. Commit and move the branch forward
-    const message = `Update goats${photo ? ` (photo: ${photo.id})` : ""} via admin by ${user}`;
+    const message = `Update goats${uploads.length ? ` (photos: ${uploads.map((u) => u.file).join(", ")})` : ""} via admin by ${user}`;
     const commit = await gh(env, "/git/commits", {
       method: "POST",
       body: JSON.stringify({ message, tree: tree.sha, parents: [parentSha] }),
