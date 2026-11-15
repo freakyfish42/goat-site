@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Goat admin</title>
+<style>
+  :root {
+    --bg: #f6f1e7; --card: #fffdf8; --ink: #2b2118; --muted: #7a6a58; --line: #e2d6c2;
+    --accent: #a94f1e; --accent-soft: #f3e2d2; --danger: #9b2c2c; --ok: #2f6b3a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1712; --card: #26201a; --ink: #f3e9da; --muted: #a8977f; --line: #3d3328;
+      --accent: #e8a06a; --accent-soft: #3a2a1e; --danger: #f08a8a; --ok: #8fd19e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1712; --card: #26201a; --ink: #f3e9da; --muted: #a8977f; --line: #3d3328;
+    --accent: #e8a06a; --accent-soft: #3a2a1e; --danger: #f08a8a; --ok: #8fd19e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 16px; max-width: 1100px; margin: 0 auto; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .list button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 6px; color: var(--ink); cursor: pointer; font: inherit; }
+  .list button:hover { background: var(--accent-soft); }
+  .list button.sel { background: var(--accent-soft); font-weight: 600; }
+  .list .tag { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+  textarea { min-height: 110px; resize: vertical; }
+  .full { grid-column: 1 / -1; }
+  .check { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
+  .check input { width: auto; }
+  .photo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .photo img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  button.primary { background: var(--accent); color: #fff; border: 0; padding: 9px 18px; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; }
+  button.secondary { background: none; color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; border-radius: 6px; cursor: pointer; font: inherit; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  #status { font-size: 14px; }
+  .ok { color: var(--ok); } .err { color: var(--danger); }
+  .hint { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Goat admin</h1>
+  <span class="hint" id="who"></span>
+</header>
+
+<div class="layout">
+  <aside class="panel">
+    <button class="primary" id="addBtn" style="width:100%;margin-bottom:10px">+ Add goat</button>
+    <div class="list" id="list"></div>
+  </aside>
+
+  <main class="panel">
+    <form id="form" autocomplete="off">
+      <div class="grid">
+        <div>
+          <label for="name">Name</label>
+          <input id="name" required>
+        </div>
+        <div>
+          <label for="id">ID (used for the photo file name)</label>
+          <input id="id" placeholder="auto from name" pattern="[a-z0-9][a-z0-9-]{0,40}">
+        </div>
+        <div>
+          <label for="sex">Sex</label>
+          <select id="sex"><option value="doe">Doe</option><option value="buck">Buck</option></select>
+        </div>
+        <div>
+          <label for="status">Status</label>
+          <select id="status"><option value="herd">On the farm</option><option value="passed">In memoriam</option></select>
+        </div>
+        <div>
+          <label for="born">Born</label>
+          <input id="born" type="date">
+        </div>
+        <div>
+          <label for="ear">Ear tag</label>
+          <input id="ear">
+        </div>
+        <div>
+          <label for="color">Colour (used for the drawing)</label>
+          <input id="color" type="color" value="#7a4a22">
+        </div>
+        <div>
+          <label for="when">Passed away / fate (only for in memoriam)</label>
+          <input id="when">
+        </div>
+        <div>
+          <label for="sire">Father</label>
+          <select id="sire"></select>
+        </div>
+        <div>
+          <label for="dam">Mother</label>
+          <select id="dam"></select>
+        </div>
+        <div class="full check"><input type="checkbox" id="approx"><span>Age is approximate</span></div>
+        <div class="full check"><input type="checkbox" id="sireUncertain"><span>Father is uncertain</span></div>
+        <div class="full check"><input type="checkbox" id="origin"><span>Original goat (first generation)</span></div>
+        <div class="full">
+          <label for="bio">Description</label>
+          <textarea id="bio"></textarea>
+        </div>
+        <div class="full">
+          <label>Photo</label>
+          <div class="photo">
+            <img id="preview" alt="">
+            <div>
+              <input type="file" id="file" accept="image/*">
+              <p class="hint" id="photoNote">Photos are resized and saved as WebP.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit" id="saveBtn">Save to website</button>
+        <span id="status"></span>
+      </div>
+      <p class="hint">Saving publishes the change to the live site within a minute or two.</p>
+    </form>
+  </main>
+</div>
+
+<script>
+const FIELDS = ["name","sex","status","born","ear","color","when","sire","dam","bio"];
+const CHECKS = ["approx","sireUncertain","origin"];
+let goats = [];
+let current = null;          // id of the goat being edited, or null for a new goat
+let isNew = false;
+let pendingPhoto = null;     // { id, base64 } once a new photo is chosen
+
+const $ = (id) => document.getElementById(id);
+const setStatus = (msg, cls = "") => { const s = $("status"); s.textContent = msg; s.className = cls; };
+
+function slugify(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+}
+
+function renderList() {
+  const list = $("list");
+  list.innerHTML = "";
+  goats.forEach((g) => {
+    const b = document.createElement("button");
+    b.className = g.id === current && !isNew ? "sel" : "";
+    b.textContent = g.name;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = g.status === "passed" ? "in memoriam" : "";
+    b.appendChild(tag);
+    b.onclick = () => select(g.id);
+    list.appendChild(b);
+  });
+}
+
+function fillParentSelects() {
+  const options = (exclude) => ['<option value="">Unknown</option>']
+    .concat(goats.filter((g) => g.id !== exclude).map((g) => `<option value="${g.id}">${g.name}</option>`))
+    .join("");
+  const self = isNew ? null : current;
+  $("sire").innerHTML = options(self);
+  $("dam").innerHTML = options(self);
+}
+
+function fillForm(g) {
+  fillParentSelects();
+  $("name").value = g.name || "";
+  $("id").value = g.id || "";
+  $("id").readOnly = !isNew;
+  $("sex").value = g.sex || "doe";
+  $("status").value = g.status || "herd";
+  $("born").value = g.born || "";
+  $("ear").value = g.ear || "";
+  $("color").value = g.color || "#7a4a22";
+  $("when").value = g.when || "";
+  $("sire").value = g.sire || "";
+  $("dam").value = g.dam || "";
+  $("bio").value = g.bio || "";
+  $("approx").checked = !!g.approx;
+  $("sireUncertain").checked = !!g.sireUncertain;
+  $("origin").checked = !!g.origin;
+  $("preview").src = isNew ? "" : `../photos/${g.id}.webp?v=${Date.now()}`;
+  $("preview").onerror = () => { $("preview").removeAttribute("src"); };
+  $("file").value = "";
+  pendingPhoto = null;
+  $("photoNote").textContent = "Photos are resized and saved as WebP.";
+}
+
+function select(id) {
+  current = id;
+  isNew = false;
+  const g = goats.find((x) => x.id === id);
+  fillForm(g);
+  renderList();
+  setStatus("");
+}
+
+function startNew() {
+  current = null;
+  isNew = true;
+  fillForm({ sex: "doe", status: "herd", color: "#7a4a22" });
+  renderList();
+  setStatus("");
+}
+
+$("name").addEventListener("input", () => {
+  if (isNew) $("id").value = slugify($("name").value);
+});
+
+// Resize a chosen image to at most 1200px and convert it to WebP in the browser
+function imageToWebp(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const max = 1200;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url);
+        if (!blob) return reject(new Error("Could not convert image."));
+        const reader = new FileReader();
+        reader.onload = () => resolve({ dataUrl: reader.result, base64: reader.result.split(",")[1] });
+        reader.readAsDataURL(blob);
+      }, "image/webp", 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Not a readable image.")); };
+    img.src = url;
+  });
+}
+
+$("file").addEventListener("change", async () => {
+  const file = $("file").files[0];
+  if (!file) return;
+  try {
+    const id = $("id").value.trim();
+    if (!id) throw new Error("Give the goat an ID before adding a photo.");
+    const out = await imageToWebp(file);
+    pendingPhoto = { id, base64: out.base64 };
+    $("preview").src = out.dataUrl;
+    $("photoNote").textContent = `New photo ready: photos/${id}.webp (saved when you press Save).`;
+  } catch (e) {
+    pendingPhoto = null;
+    $("photoNote").textContent = e.message;
+    $("photoNote").className = "err";
+  }
+});
+
+function collect() {
+  const id = $("id").value.trim();
+  const g = { id, name: $("name").value.trim(), sex: $("sex").value, status: $("status").value };
+  if ($("born").value) g.born = $("born").value;
+  if ($("ear").value.trim()) g.ear = $("ear").value.trim();
+  g.color = $("color").value;
+  if ($("when").value.trim() && g.status === "passed") g.when = $("when").value.trim();
+  g.sire = $("sire").value || null;
+  g.dam = $("dam").value || null;
+  if ($("bio").value.trim()) g.bio = $("bio").value.trim();
+  if ($("approx").checked) g.approx = true;
+  if ($("sireUncertain").checked) g.sireUncertain = true;
+  if ($("origin").checked) g.origin = true;
+  return g;
+}
+
+$("addBtn").onclick = startNew;
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const g = collect();
+  if (!g.id || !/^[a-z0-9][a-z0-9-]{0,40}$/.test(g.id)) return setStatus("ID must be lowercase letters, numbers and dashes.", "err");
+
+  const next = goats.map((x) => ({ ...x }));
+  if (isNew) {
+    if (next.some((x) => x.id === g.id)) return setStatus("Another goat already has that ID.", "err");
+    next.push(g);
+  } else {
+    const i = next.findIndex((x) => x.id === current);
+    next[i] = g;
+  }
+  // A goat's children are not affected by renaming because we do not allow ID changes after creation.
+
+  const payload = { goats: next.map(stripEmpty) };
+  if (pendingPhoto && pendingPhoto.id === g.id) payload.photo = pendingPhoto;
+
+  $("saveBtn").disabled = true;
+  setStatus("Saving...");
+  try {
+    const res = await fetch("/api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
+    goats = next;
+    current = g.id;
+    isNew = false;
+    pendingPhoto = null;
+    renderList();
+    fillForm(goats.find((x) => x.id === g.id));
+    setStatus("Saved. The site will update in a minute or two.", "ok");
+  } catch (err) {
+    setStatus(err.message, "err");
+  } finally {
+    $("saveBtn").disabled = false;
+  }
+});
+
+function stripEmpty(g) {
+  const out = {};
+  for (const [k, v] of Object.entries(g)) {
+    if (v === "" || v === undefined) continue;
+    if (v === false && CHECKS.includes(k)) continue;
+    out[k] = v;
+  }
+  if (out.sire === undefined) out.sire = null;
+  if (out.dam === undefined) out.dam = null;
+  return out;
+}
+
+async function load() {
+  try {
+    const res = await fetch("../data/goats.json", { cache: "no-store" });
+    goats = await res.json();
+  } catch {
+    setStatus("Could not load the goat list.", "err");
+    return;
+  }
+  if (goats.length) select(goats[0].id);
+  else startNew();
+}
+load();
+</script>
+</body>
+</html>
