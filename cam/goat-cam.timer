@@ -1,0 +1,9 @@
+[Unit]
+Description=Take a goat cam snapshot every 30 minutes
+
+[Timer]
+OnCalendar=*:00,30
+Persistent=false
+
+[Install]
+WantedBy=timers.target

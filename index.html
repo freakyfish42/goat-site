@@ -319,6 +319,7 @@ const T = {
     saleNote: "Currently there are no kids for sale until Spring 2027. However, if you are looking for a grown doe to add to your herd, or to help create your first herd, feel free to contact our owner, Dino Wachendorf.",
     camH: "Goat cam", camSub: "Live from the pen. Eventually.", offline: "OFFLINE",
     camNote: "No camera is connected yet. When there is one, the stream goes here.",
+    camTaken: n => `Photo taken ${n}. A new one is taken every 30 minutes. Photos with people in them are never shown.`,
     onFarm: "goats on the farm", oldest: "oldest", youngest: "youngest",
     doe: "Doe", buck: "Buck", born: "born", bornFull: "Born", earTag: "ear tag",
     old: n => `${n} old`, around: "around",
@@ -350,6 +351,7 @@ const T = {
     saleNote: "Det er for øyeblikket ingen kje til salgs før våren 2027. Men hvis du er på jakt etter en voksen geit til flokken din, eller til å starte din første flokk, er du velkommen til å kontakte eieren vår, Dino Wachendorf.",
     camH: "Geitekamera", camSub: "Direkte fra innhegningen. Etter hvert.", offline: "FRAKOPLET",
     camNote: "Det er ikke koblet til noe kamera ennå. Når det er på plass, vises strømmen her.",
+    camTaken: n => `Bilde tatt ${n}. Et nytt tas hvert 30. minutt. Bilder med mennesker på vises aldri.`,
     onFarm: "geiter på gården", oldest: "eldst", youngest: "yngst",
     doe: "Geit", buck: "Bukk", born: "født", bornFull: "Født", earTag: "øremerke",
     old: n => `${n} år gammel`, around: "ca.",
@@ -707,9 +709,22 @@ function renderSale() {
     </div>`).join("");
 }
 
-/* ---------- goat cam placeholder ---------- */
-function renderCam() {
-  $("camGoat").innerHTML = goatSVG({ name: t("camGoat"), color: "ink", sex: "buck", born: "2018-01-01" });
+/* ---------- goat cam ----------
+   CAM_URL: where the snapshot server is published (through the Cloudflare Tunnel),
+   with a trailing slash, e.g. "https://cam.example.com/". Empty = show the placeholder. */
+const CAM_URL = "";
+async function renderCam() {
+  const placeholder = () => goatSVG({ name: t("camGoat"), color: "ink", sex: "buck", born: "2018-01-01" });
+  $("camGoat").innerHTML = placeholder();
+  if (!CAM_URL) return;
+  try {
+    const meta = await (await fetch(CAM_URL + "meta.json", { cache: "no-store" })).json();
+    const taken = new Date(meta.taken);
+    $("camGoat").innerHTML = `<img class="goat photo" src="${CAM_URL}latest.jpg?t=${Date.now()}" alt="${t("camGoat")}" onerror="this.parentNode.innerHTML=''">`;
+    $("camNote").textContent = T[lang].camTaken(taken.toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" }));
+  } catch {
+    $("camGoat").innerHTML = placeholder();
+  }
 }
 
 /* ---------- everything ---------- */

@@ -1,0 +1,10 @@
+[Unit]
+Description=Goat cam snapshot with person check
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=goatcam
+EnvironmentFile=/etc/goat-cam.env
+ExecStart=/opt/goat-cam/venv/bin/python /opt/goat-cam/snapshot.py
