@@ -175,6 +175,12 @@
   .tree svg.links path.lit { stroke: var(--accent); stroke-width: 3; }
   .node.lit { border-color: var(--accent); }
   .node.focus { background: var(--accent-soft); }
+  .node .node-details {
+    display: none; position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+    white-space: nowrap; font: inherit; font-size: .7rem; font-weight: 600; cursor: pointer;
+    padding: 3px 10px; border: 0; border-radius: 999px; background: var(--accent); color: #fff;
+  }
+  .node.focus .node-details { display: block; }
   .tree-info { padding: 14px 18px; margin-top: 14px; min-height: 58px; }
   .tree-info .btn { margin: 0 0 0 12px; padding: 5px 14px; }
 
@@ -639,10 +645,11 @@ function renderTree() {
   box.style.height = height + "px";
   box.innerHTML = `<svg class="links" width="${width}" height="${height}">${links.join("")}</svg>` +
     GOATS.map(g => `
-      <button class="node ${alive(g) ? "" : "gone"}" data-node="${g.id}"
+      <div class="node ${alive(g) ? "" : "gone"}" data-node="${g.id}" role="button" tabindex="0"
         style="left:${pos[g.id].x}px;top:${pos[g.id].y}px;width:${W}px;height:${H}px">
         ${goatPic(g)}<strong>${g.name}</strong><small>${yearOf(g)}</small>${tagFor(g)}
-      </button>`).join("");
+        <button class="node-details" data-goat="${g.id}">${t("openProfile")}</button>
+      </div>`).join("");
   applyFocus();
 }
 
@@ -678,11 +685,18 @@ function applyFocus() {
     <button class="btn" data-goat="${g.id}">${t("openProfile")}</button>`;
 }
 $("treeBox").addEventListener("click", e => {
+  if (e.target.closest("[data-goat]")) return;          // the details button inside a box
   const node = e.target.closest("[data-node]");
   if (!node) return;
   const id = node.dataset.node;
   treeFocus = treeFocus === id ? null : id;
   applyFocus();
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node")) {
+    e.preventDefault();
+    e.target.click();
+  }
 });
 document.addEventListener("click", e => {
   if (!treeFocus) return;
