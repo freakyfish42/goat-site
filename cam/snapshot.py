@@ -42,7 +42,7 @@ def capture(target: pathlib.Path) -> bool:
     """Grab one frame from the camera into target. Returns False if it failed."""
     cmd = ["ffmpeg", "-y", "-loglevel", "error"]
     if RTSP_URL.startswith("rtsp://"):
-        cmd += ["-rtsp_transport", "tcp", "-rw_timeout", "10000000"]  # 10 s, in microseconds
+        cmd += ["-rtsp_transport", "tcp"]
     cmd += ["-i", RTSP_URL, "-frames:v", "1", str(target)]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
