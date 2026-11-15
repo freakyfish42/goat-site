@@ -90,10 +90,6 @@
           <input id="ear">
         </div>
         <div>
-          <label for="color">Colour (used for the drawing)</label>
-          <input id="color" type="color" value="#7a4a22">
-        </div>
-        <div>
           <label for="when">Passed away / fate (only for in memoriam)</label>
           <input id="when">
         </div>
@@ -134,7 +130,7 @@
 </div>
 
 <script>
-const FIELDS = ["name","sex","status","born","ear","color","when","sire","dam","bio"];
+const FIELDS = ["name","sex","status","born","ear","when","sire","dam","bio"];
 const CHECKS = ["approx","sireUncertain","origin"];
 let goats = [];
 let current = null;          // id of the goat being edited, or null for a new goat
@@ -183,7 +179,7 @@ function fillForm(g) {
   $("status").value = g.status || "herd";
   $("born").value = g.born || "";
   $("ear").value = g.ear || "";
-  $("color").value = g.color || "#7a4a22";
+  
   $("when").value = g.when || "";
   $("sire").value = g.sire || "";
   $("dam").value = g.dam || "";
@@ -210,7 +206,7 @@ function select(id) {
 function startNew() {
   current = null;
   isNew = true;
-  fillForm({ sex: "doe", status: "herd", color: "#7a4a22" });
+  fillForm({ sex: "doe", status: "herd" });
   renderList();
   setStatus("");
 }
@@ -266,7 +262,7 @@ function collect() {
   const g = { id, name: $("name").value.trim(), sex: $("sex").value, status: $("status").value };
   if ($("born").value) g.born = $("born").value;
   if ($("ear").value.trim()) g.ear = $("ear").value.trim();
-  g.color = $("color").value;
+  
   if ($("when").value.trim() && g.status === "passed") g.when = $("when").value.trim();
   g.sire = $("sire").value || null;
   g.dam = $("dam").value || null;
