@@ -190,7 +190,7 @@
     aspect-ratio: 16 / 9; display: grid; place-items: center;
   }
   .cam .screen .goat { width: 46%; color: #cfd3c4; }
-  .cam .screen .goat .skin { fill: #15160f; }
+  .cam .screen .goat .skin { fill: #15160f; } .cam .screen img.photo { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; border-radius: 0; }
   .cam .rec { position: absolute; top: 12px; left: 14px; color: #cfd3c4; font: 600 .8rem ui-monospace, monospace; }
   .cam .rec i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #777; margin-right: 6px; }
   .cam p { color: var(--muted); margin: 12px 4px 2px; }
@@ -285,7 +285,7 @@
     <p class="sub" data-i18n="camSub">Live from the pen. Eventually.</p>
     <div class="card cam">
       <div class="screen">
-        <div class="rec"><i></i><span data-i18n="offline">OFFLINE</span></div>
+        
         <div id="camGoat" style="width:100%;display:grid;place-items:center"></div>
       </div>
       <p id="camNote" data-i18n="camNote">No camera is connected yet. When there is one, the stream goes here.</p>
