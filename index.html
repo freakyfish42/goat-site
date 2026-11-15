@@ -739,7 +739,7 @@ async function renderCam() {
   }
 }
 
-/* ---------- everything ---------- */
+let camTaken = null; async function refreshCam() { if (!CAM_URL || !$("cam").classList.contains("active")) return; try { const meta = await (await fetch(CAM_URL + "meta.json", { cache: "no-store" })).json(); if (meta.taken === camTaken) return; camTaken = meta.taken; const img = document.querySelector("#camGoat img"); if (img) img.src = CAM_URL + "latest.jpg?t=" + Date.now(); else renderCam(); $("camNote").textContent = T[lang].camTaken(new Date(meta.taken).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" })); } catch {} } setInterval(refreshCam, 60000);/* ---------- everything ---------- */
 function renderAll() {
   applyStatic();
   renderHome();
