@@ -126,7 +126,7 @@
 
       <div class="actions">
         <button class="primary" type="submit" id="saveBtn">Save to website</button>
-        <span id="status"></span>
+        <span id="statusMsg"></span>
       </div>
       <p class="hint">Saving publishes the change to the live site within a minute or two.</p>
     </form>
@@ -142,7 +142,7 @@ let isNew = false;
 let pendingPhoto = null;     // { id, base64 } once a new photo is chosen
 
 const $ = (id) => document.getElementById(id);
-const setStatus = (msg, cls = "") => { const s = $("status"); s.textContent = msg; s.className = cls; };
+const setStatus = (msg, cls = "") => { const s = $("statusMsg"); s.textContent = msg; s.className = cls; };
 
 function slugify(s) {
   return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
