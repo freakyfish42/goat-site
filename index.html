@@ -182,7 +182,6 @@
   }
   .node.focus .node-details { display: block; }
   .tree-info { padding: 14px 18px; margin-top: 14px; min-height: 58px; }
-  .tree-info .btn { margin: 0 0 0 12px; padding: 5px 14px; }
 
   /* Goat cam */
   .cam { max-width: 640px; margin: 0 auto; padding: 14px; }
@@ -681,8 +680,7 @@ function applyFocus() {
     el.classList.toggle("lit", onUp || onDown);
   });
   const names = set => [...set].map(i => byId[i].name).join(", ") || t("noneKnown");
-  $("treeInfo").innerHTML = `<strong>${g.name}</strong> · ${t("ancestors")}: ${names(up)} · ${t("descendants")}: ${names(down)}
-    <button class="btn" data-goat="${g.id}">${t("openProfile")}</button>`;
+  $("treeInfo").innerHTML = `<strong>${g.name}</strong> · ${t("ancestors")}: ${names(up)} · ${t("descendants")}: ${names(down)}`;
 }
 $("treeBox").addEventListener("click", e => {
   if (e.target.closest("[data-goat]")) return;          // the details button inside a box
