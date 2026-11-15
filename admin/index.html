@@ -102,7 +102,7 @@
           <select id="dam"></select>
         </div>
         <div class="full check"><input type="checkbox" id="approx"><span>Age is approximate</span></div>
-        <div class="full check"><input type="checkbox" id="sireUncertain"><span>Father is uncertain</span></div>
+        
         <div class="full check"><input type="checkbox" id="origin"><span>Original goat (first generation)</span></div>
         <div class="full">
           <label for="bio">Description</label>
@@ -131,7 +131,7 @@
 
 <script>
 const FIELDS = ["name","sex","status","born","ear","when","sire","dam","bio"];
-const CHECKS = ["approx","sireUncertain","origin"];
+const CHECKS = ["approx","origin"];
 let goats = [];
 let current = null;          // id of the goat being edited, or null for a new goat
 let isNew = false;
@@ -185,7 +185,7 @@ function fillForm(g) {
   $("dam").value = g.dam || "";
   $("bio").value = g.bio || "";
   $("approx").checked = !!g.approx;
-  $("sireUncertain").checked = !!g.sireUncertain;
+  
   $("origin").checked = !!g.origin;
   $("preview").src = isNew ? "" : `../photos/${g.id}.webp?v=${Date.now()}`;
   $("preview").onerror = () => { $("preview").removeAttribute("src"); };
@@ -268,7 +268,7 @@ function collect() {
   g.dam = $("dam").value || null;
   if ($("bio").value.trim()) g.bio = $("bio").value.trim();
   if ($("approx").checked) g.approx = true;
-  if ($("sireUncertain").checked) g.sireUncertain = true;
+  
   if ($("origin").checked) g.origin = true;
   return g;
 }
