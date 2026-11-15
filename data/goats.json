@@ -79,7 +79,7 @@
     "color": "#7a4a22",
     "sire": null,
     "dam": null,
-    "bio": "Half brother of Alonso, bought from the same farm. Probably the father of Enzo, Choco, Channel and Frost."
+    "bio": "Half brother of Alonso, bought from the same farm. Probably the father of Enzo, Choco and Frost."
   },
   {
     "id": "balder",
@@ -156,20 +156,7 @@
     "sire": "diego",
     "sireUncertain": true,
     "dam": "olivia",
-    "bio": "Twin of Channel. Outgoing, loves attention, and fights with Stella. Fully brown like Enzo."
-  },
-  {
-    "id": "channel",
-    "name": "Channel",
-    "sex": "doe",
-    "born": "2025-03-01",
-    "ear": "5003",
-    "status": "herd",
-    "color": "#6b7280",
-    "sire": "diego",
-    "sireUncertain": true,
-    "dam": "olivia",
-    "bio": "Twin of Choco. Very avoidant of people, but cares about one thing: her sister Choco."
+    "bio": "Outgoing, loves attention, and fights with Stella. Fully brown like Enzo."
   },
   {
     "id": "frost",
@@ -195,7 +182,7 @@
     "sire": "alonso",
     "sireUncertain": true,
     "dam": "bonita",
-    "bio": "Loves attention and gets jealous if someone pets the others. Rivals with Choco and Channel. Expected to have kids in spring 2027."
+    "bio": "Loves attention and gets jealous if someone pets the others. Rivals with Choco. Expected to have kids in spring 2027."
   },
   {
     "id": "alabama",
