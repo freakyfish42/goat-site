@@ -436,7 +436,7 @@ const tagFor = g => alive(g) ? "" : `<span class="tag ${g.status}">${statusLabel
 
 /* ---------- stick goat drawing ---------- */
 function goatSVG(g) {
-  const c = g.color === "ink" ? "currentColor" : g.color;
+  const c = g.color === "ink" ? "currentColor" : (g.color || "#7a4a22");
   const horns = {
     big: '<path d="M95 20 Q90 6 79 9"/><path d="M101 19 Q99 5 88 3"/>',
     small: '<path d="M96 20 L93 12"/><path d="M101 19 L101 11"/>',
