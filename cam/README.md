@@ -49,20 +49,83 @@ journalctl -u goat-cam.service -n 20
 The log says either `published snapshot` or `person found, not published`. It never includes the camera password.
 Check `/var/www/goat-cam/` for `latest.jpg` and `meta.json`.
 
-## 4. Make it public through the Cloudflare Tunnel
+## 4. Make it public through a Cloudflare Tunnel
 
-Use `cloudflared` on the Pi, with a public hostname such as `cam.yourdomain.example`, pointing at
-`http://localhost:8080`. Serve `/var/www/goat-cam` on port 8080, for example with
-`python3 -m http.server 8080 --directory /var/www/goat-cam` as a service, or with Caddy or nginx.
-Do not forward any port on the router.
+The Pi runs a small web server that only serves the photo files, and `cloudflared` connects that server to
+a public address. No port is opened on your router. You need a domain (or subdomain) managed by Cloudflare,
+for example `cam.yourdomain.example`.
+
+**a. Install the web server.**
+
+```bash
+sudo cp cam/serve.py /opt/goat-cam/serve.py
+sudo cp cam/goat-cam-web.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now goat-cam-web.service
+curl -sI http://127.0.0.1:8080/meta.json      # should show "200 OK"
+```
+
+**b. Install cloudflared** (the Raspberry Pi 5 uses the arm64 package):
+
+```bash
+curl -fsSL -o cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb
+sudo apt install -y ./cloudflared.deb
+cloudflared --version
+```
+
+**c. Create the tunnel.** Run these on the Pi. The first one opens a link to sign in to Cloudflare in a browser
+and asks for the domain to use.
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel create goat-cam
+cloudflared tunnel route dns goat-cam cam.yourdomain.example
+```
+
+`tunnel create` prints a tunnel ID and writes a credentials file to `~/.cloudflared/<ID>.json`.
+
+**d. Write the tunnel config** at `/etc/cloudflared/config.yml`, using your tunnel ID and the hostname:
+
+```yaml
+tunnel: <TUNNEL-ID>
+credentials-file: /etc/cloudflared/<TUNNEL-ID>.json
+ingress:
+  - hostname: cam.yourdomain.example
+    service: http://127.0.0.1:8080
+  - service: http_status:404
+```
+
+Copy the credentials file to `/etc/cloudflared/` as well, then install the service:
+
+```bash
+sudo mkdir -p /etc/cloudflared
+sudo cp ~/.cloudflared/<TUNNEL-ID>.json /etc/cloudflared/
+sudo cloudflared service install
+sudo systemctl status cloudflared
+```
+
+The last line must be the only public route. Do not add any other hostnames to this config, so nothing else
+on the Pi is reachable from the internet.
+
+**e. Check it from outside your home network** (for example on a phone using mobile data):
+
+```bash
+curl -sI https://cam.yourdomain.example/meta.json     # "200 OK" and "Access-Control-Allow-Origin: *"
+```
 
 Then set `CAM_URL` in `index.html` to `"https://cam.yourdomain.example/"` and push. The goat cam page will
 show the newest photo and the time it was taken.
 
+**Troubleshooting**
+- Error 502 or 1033 from Cloudflare: the tunnel is up but `goat-cam-web` is not running. Check
+  `systemctl status goat-cam-web`.
+- The page shows the placeholder but the URL works: the browser console will say if the request was blocked,
+  usually because `CAM_URL` has no trailing slash or does not match the hostname exactly.
+
 ## Settings
 
 - `CAM_PERSON_THRESHOLD` (default `0.25`): lower blocks more frames. Keep it low.
-- `CAM_QUIET_HOURS` (for example `22-6`): no snapshots during those local hours.
+- `CAM_QUIET_HOURS` (set to `22-6`): no snapshots from 22:00 to 06:00 local time. Change it or leave it empty to change this.
 
 ## Limits
 
