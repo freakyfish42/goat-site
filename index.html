@@ -50,7 +50,7 @@
     line-height: 1.5;
   }
   /* Wheat-stalk cursor */
-  html, body, a, button, nav button, .card, [data-tab] {
+  html { scrollbar-gutter: stable; } html, body, a, button, nav button, .card, [data-tab] {
     cursor: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 32 32%22%3E%0A%3Cpath d=%22M3 3 L17 17%22 stroke=%22%236b4a2a%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%0A%3Cg fill=%22%23e2b865%22 stroke=%22%236b4a2a%22 stroke-width=%220.9%22%3E%0A%3Cellipse cx=%227.2%22 cy=%226.6%22 rx=%221.7%22 ry=%223%22 transform=%22rotate%28-45 7.2 6.6%29%22/%3E%0A%3Cellipse cx=%229.8%22 cy=%229.2%22 rx=%221.7%22 ry=%223%22 transform=%22rotate%28-45 9.8 9.2%29%22/%3E%0A%3Cellipse cx=%2212.6%22 cy=%2211.9%22 rx=%221.7%22 ry=%223%22 transform=%22rotate%28-45 12.6 11.9%29%22/%3E%0A%3Cellipse cx=%225.4%22 cy=%228.4%22 rx=%221.6%22 ry=%222.7%22 transform=%22rotate%28-45 5.4 8.4%29%22/%3E%0A%3Cellipse cx=%228.2%22 cy=%2211.2%22 rx=%221.6%22 ry=%222.7%22 transform=%22rotate%28-45 8.2 11.2%29%22/%3E%0A%3C/g%3E%0A%3C/svg%3E") 4 4, auto;
   }
   body::before {
@@ -190,7 +190,7 @@
     aspect-ratio: 16 / 9; display: grid; place-items: center;
   }
   .cam .screen .goat { width: 46%; color: #cfd3c4; }
-  .cam .screen .goat .skin { fill: #15160f; }
+  .cam .screen .goat .skin { fill: #15160f; } .cam .screen img.photo { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; border-radius: 0; }
   .cam .rec { position: absolute; top: 12px; left: 14px; color: #cfd3c4; font: 600 .8rem ui-monospace, monospace; }
   .cam .rec i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #777; margin-right: 6px; }
   .cam p { color: var(--muted); margin: 12px 4px 2px; }
@@ -243,7 +243,7 @@
     <button data-tab="herd" data-i18n="navHerd">The herd</button>
     <button data-tab="tree" data-i18n="navTree">Family tree</button>
     <button data-tab="sale" data-i18n="navSale">Kids for sale</button>
-    <button data-tab="cam" data-i18n="navCam">Goat cam</button>
+    <button data-tab="cam" data-i18n="navCam">Goat camera</button>
   </nav>
 </header>
 
@@ -281,14 +281,14 @@
   </section>
 
   <section id="cam">
-    <h2 data-i18n="camH">Goat cam</h2>
+    <h2 data-i18n="camH">Goat camera</h2>
     <p class="sub" data-i18n="camSub">Live from the pen. Eventually.</p>
     <div class="card cam">
       <div class="screen">
-        <div class="rec"><i></i><span data-i18n="offline">OFFLINE</span></div>
+        
         <div id="camGoat" style="width:100%;display:grid;place-items:center"></div>
       </div>
-      <p data-i18n="camNote">No camera is connected yet. When there is one, the stream goes here.</p>
+      <p id="camNote" data-i18n="camNote">No camera is connected yet. When there is one, the stream goes here.</p>
     </div>
   </section>
 </main>
@@ -306,7 +306,7 @@ const T = {
   en: {
     title: "The Lømsland Goats",
     subtitle: "The herd on the farm, past and present.",
-    navHome: "Home", navHerd: "The herd", navTree: "Family tree", navSale: "Kids for sale", navCam: "Goat cam",
+    navHome: "Home", navHerd: "The herd", navTree: "Family tree", navSale: "Kids for sale", navCam: "Goat camera",
     welcomeH: "Welcome to the Lømsland Boer Goat farm!",
     welcomeP: "We are a small hobby farm located here in Kristiansand, Norway. You may have seen our furry friends walking alongside you on the Bjaavann golf course. Our girls each have unique and distinct personalities, making our herd one of a kind. All of our goats are social and love attention, so do not be afraid to give them a pet if they approach you. Boer goats are known for their gentle personalities and for being great mothers. Every spring, we introduce new kids onto the farm. If you are looking to expand your herd or create a new one, check out our kids for sale section of our webpage.",
     hero: "Goat of the day",
@@ -322,9 +322,9 @@ const T = {
     saleSub: "Looking to expand your herd or start a new one? Our kids are sold when they are old enough to leave their mothers.",
     contactHtml: "<strong>Dino Wachendorf</strong><br>Phone number: 90 23 80 00",
     saleNote: "Currently there are no kids for sale until Spring 2027. However, if you are looking for a grown doe to add to your herd, or to help create your first herd, feel free to contact our owner, Dino Wachendorf.",
-    camH: "Goat cam", camSub: "Live from the pen. Eventually.", offline: "OFFLINE",
+    camH: "Goat camera", camSub: "Updates every minute.", offline: "OFFLINE",
     camNote: "No camera is connected yet. When there is one, the stream goes here.",
-    camTaken: n => `Photo taken ${n}. A new one is taken every 30 minutes. Photos with people in them are never shown.`,
+    camTaken: n => `Photo taken ${n}. A new one is taken every minute.`,
     onFarm: "goats on the farm", oldest: "oldest", youngest: "youngest",
     doe: "Doe", buck: "Buck", born: "born", bornFull: "Born", earTag: "ear tag",
     old: n => `${n} old`, around: "around",
@@ -354,9 +354,9 @@ const T = {
     saleSub: "Vil du utvide flokken eller starte en ny? Kjeene selges når de er gamle nok til å tas fra mødrene.",
     contactHtml: "<strong>Dino Wachendorf</strong><br>Telefon: 90 23 80 00",
     saleNote: "Vi har ingen kje til salgs før våren 2027. Er du på utkikk etter en voksen geit, enten til flokken din eller for å starte din første flokk, er det bare å ta kontakt med eieren, Dino Wachendorf.",
-    camH: "Geitekamera", camSub: "Direkte fra innhegningen. Etter hvert.", offline: "FRAKOBLET",
+    camH: "Geitekamera", camSub: "Oppdateres hvert minutt.", offline: "FRAKOBLET",
     camNote: "Kameraet er ikke koblet til ennå. Når det er på plass, vises bildene her.",
-    camTaken: n => `Bilde tatt ${n}. Et nytt tas hvert 30. minutt. Bilder med mennesker på vises aldri.`,
+    camTaken: n => `Bilde tatt ${n}. Et nytt tas hvert minutt.`,
     onFarm: "geiter på gården", oldest: "eldst", youngest: "yngst",
     doe: "Geit", buck: "Bukk", born: "født", bornFull: "Født", earTag: "øremerke",
     old: n => `${n} gammel`, around: "ca.",
@@ -375,16 +375,15 @@ const BIO_NO = {
   lola: "En av de første geitene på gården. Kom hit da hun var rundt fire år, og var allerede drektig. Jurbetennelse og misdannede spener gjorde det vanskelig for kjeene hennes å die.",
   oline: "Søsteren til Olivia og en av de aller første geitene på gården. Mor til Celina.",
   alonso: "Halvbroren til Diego, kjøpt fra samme gård. Gikk sammen med Enzo etter at Diego døde, og ble far til rundt tre generasjoner kje.",
-  diego: "Halvbroren til Alonso, kjøpt fra samme gård. Sannsynligvis far til Enzo, Choco, Channel og Frost.",
+  diego: "Halvbroren til Alonso, kjøpt fra samme gård. Sannsynligvis far til Enzo, Choco og Frost.",
   balder: "Andregenerasjons bukk fra en annen blodslinje, hentet inn for å erstatte Alonso. Sjenert, men ikke aggressiv. Etter to generasjoner kje skal han bli prøvebukk.",
   bonita: "Den første geita som ble født på gården. Vennlig og glad i å bli klappet, men ingen god mor. Har overlevd listeriose to ganger.",
   lucifer: "Flaskekjeet som skrek et helt døgn i strekk. Tror mennesker er moren hans, og stanger alle som står i veien. Holdes som kjæledyr og skal kastreres når han er tre måneder.",
   celina: "Veldig sosial. Elsker å bli klappet og legger hodet inntil deg for å få oppmerksomhet. Helbrun med hvite klauver.",
   enzo: "Flokkleder. Ble kastrert da han var tre måneder, for å holde Alonso med selskap. Veldig vennlig, og vil alltid bli klødd på hodet.",
-  choco: "Tvillingsøsteren til Channel. Utadvendt, glad i oppmerksomhet, og krangler med Stella. Helbrun som Enzo.",
-  channel: "Tvillingsøsteren til Choco. Holder seg helst unna folk, men bryr seg om én ting: søsteren Choco.",
+  choco: "Utadvendt, glad i oppmerksomhet, og krangler med Stella. Helbrun som Enzo.",
   frost: "Sjenert og redd, men utrolig søt når hun først stoler på deg. Ser ut som en kopi av moren sin. Skal etter planen få kje våren 2027.",
-  stella: "Elsker oppmerksomhet og blir sjalu hvis noen klapper de andre. Krangler med Choco og Channel. Skal etter planen få kje våren 2027.",
+  stella: "Elsker oppmerksomhet og blir sjalu hvis noen klapper de andre. Krangler med Choco. Skal etter planen få kje våren 2027.",
   alabama: "Utadvendt, og stanger de andre for å få oppmerksomhet. Svært knyttet til moren sin, Celina."
 };
 const WHEN_NO = {
@@ -724,7 +723,7 @@ function renderSale() {
 /* ---------- goat cam ----------
    CAM_URL: where the snapshot server is published (through the Cloudflare Tunnel),
    with a trailing slash, e.g. "https://cam.example.com/". Empty = show the placeholder. */
-const CAM_URL = "";
+const CAM_URL = "https://length-algorithms-hearings-consecutive.trycloudflare.com/";
 async function renderCam() {
   const placeholder = () => goatSVG({ name: t("camGoat"), color: "ink", sex: "buck", born: "2018-01-01" });
   $("camGoat").innerHTML = placeholder();
@@ -739,7 +738,7 @@ async function renderCam() {
   }
 }
 
-/* ---------- everything ---------- */
+let camTaken = null; async function refreshCam() { if (!CAM_URL || !$("cam").classList.contains("active")) return; try { const meta = await (await fetch(CAM_URL + "meta.json", { cache: "no-store" })).json(); if (meta.taken === camTaken) return; camTaken = meta.taken; const img = document.querySelector("#camGoat img"); if (img) img.src = CAM_URL + "latest.jpg?t=" + Date.now(); else renderCam(); $("camNote").textContent = T[lang].camTaken(new Date(meta.taken).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" })); } catch {} } setInterval(refreshCam, 60000);/* ---------- everything ---------- */
 function renderAll() {
   applyStatic();
   renderHome();
