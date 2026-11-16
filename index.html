@@ -738,7 +738,35 @@ async function renderCam() {
   }
 }
 
-let camTaken = null; async function refreshCam() { if (!CAM_URL || !$("cam").classList.contains("active")) return; try { const meta = await (await fetch(CAM_URL + "meta.json", { cache: "no-store" })).json(); if (meta.taken === camTaken) return; camTaken = meta.taken; const img = document.querySelector("#camGoat img"); if (img) img.src = CAM_URL + "latest.jpg?t=" + Date.now(); else renderCam(); $("camNote").textContent = T[lang].camTaken(new Date(meta.taken).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" })); } catch {} } setInterval(refreshCam, 60000);/* ---------- everything ---------- */
+/* Keep the goat cam photo fresh while someone is looking at it.
+   Every minute, while the Goat cam tab is open, check meta.json for a new snapshot time,
+   and only reload the photo when the time has changed. */
+let camTaken = null;   // time of the snapshot currently on screen, from meta.json
+async function refreshCam() {
+  // Do nothing if no camera is set up, or the visitor is on another tab (saves requests)
+  if (!CAM_URL || !$("cam").classList.contains("active")) return;
+  try {
+    const meta = await (await fetch(CAM_URL + "meta.json", { cache: "no-store" })).json();
+    if (meta.taken === camTaken) return;   // no new snapshot since the last check
+    camTaken = meta.taken;
+
+    // Swap in the new photo. "?t=" makes the browser fetch it again instead of using its cached copy.
+    // If there is no photo on the page yet (the placeholder is showing), draw the camera box from scratch.
+    const img = document.querySelector("#camGoat img");
+    if (img) img.src = CAM_URL + "latest.jpg?t=" + Date.now();
+    else renderCam();
+
+    // Update the "Photo taken ..." line under the picture, in the visitor's language
+    $("camNote").textContent = T[lang].camTaken(
+      new Date(meta.taken).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" })
+    );
+  } catch {
+    // Camera server unreachable: keep showing what is already on the page and try again next minute
+  }
+}
+setInterval(refreshCam, 60000);   // once a minute, matching how often the Pi takes a snapshot
+
+/* ---------- everything ---------- */
 function renderAll() {
   applyStatic();
   renderHome();
