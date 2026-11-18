@@ -118,8 +118,9 @@
   .intro { padding: 22px 26px; margin-bottom: 18px; }
   .intro h2 { font-size: 1.6rem; margin-bottom: 8px; }
   .intro p { margin: 0; line-height: 1.65; }
-  .visitor-count { position: fixed; right: 14px; bottom: 14px; z-index: 50; margin: 0; }
-  .visitor-count img { display: block; }
+  .visitor-count { position: fixed; right: 14px; bottom: 14px; z-index: 50; margin: 0; padding: 8px 14px;
+    background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 12px; font-size: .9rem; }
+  .visitor-count strong { margin-left: 4px; }
 
   /* Goat of the day */
   .hero {
@@ -326,6 +327,7 @@ const T = {
     saleNote: "Currently there are no kids for sale until Spring 2027. However, if you are looking for a grown doe to add to your herd, or to help create your first herd, feel free to contact our owner, Dino Wachendorf.",
     camH: "Goat camera", camSub: "Updates every minute.", offline: "OFFLINE",
     camNote: "No camera is connected yet. When there is one, the stream goes here.",
+    visitors: "Visitors",
     camTaken: n => `Photo taken ${n}. A new one is taken every minute.`,
     onFarm: "goats on the farm", oldest: "oldest", youngest: "youngest",
     doe: "Doe", buck: "Buck", born: "born", bornFull: "Born", earTag: "ear tag",
@@ -358,6 +360,7 @@ const T = {
     saleNote: "Vi har ingen kje til salgs før våren 2027. Er du på utkikk etter en voksen geit, enten til flokken din eller for å starte din første flokk, er det bare å ta kontakt med eieren, Dino Wachendorf.",
     camH: "Geitekamera", camSub: "Oppdateres hvert minutt.", offline: "FRAKOBLET",
     camNote: "Kameraet er ikke koblet til ennå. Når det er på plass, vises bildene her.",
+    visitors: "Besøkende",
     camTaken: n => `Bilde tatt ${n}. Et nytt tas hvert minutt.`,
     onFarm: "geiter på gården", oldest: "eldst", youngest: "yngst",
     doe: "Geit", buck: "Bukk", born: "født", bornFull: "Født", earTag: "øremerke",
@@ -790,6 +793,13 @@ async function loadGoats() {
 }
 loadGoats();
 </script>
-<div class="visitor-count"><img src="https://freakyfish.goatcounter.com/counter/%2F.svg" alt="Visitors" width="200" height="80"></div>
+<div class="visitor-count" id="visitBox" hidden><span data-i18n="visitors">Visitors</span>: <strong id="visitNum"></strong></div>
+<script>
+fetch("/visits").then(r => r.json()).then(d => {
+  if (!d || !d.count) return;
+  document.getElementById("visitNum").textContent = d.count;
+  document.getElementById("visitBox").hidden = false;
+}).catch(() => {});
+</script>
 </body>
 </html>
